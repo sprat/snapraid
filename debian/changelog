@@ -1,4 +1,4 @@
-snapraid (11.3-0syprat1~DIST) UNRELEASED; urgency=medium
+snapraid (11.3-0syprat1~focal) focal; urgency=medium
 
   [ Andrea Mazzoleni ]
   * Add checksums for 11.2
