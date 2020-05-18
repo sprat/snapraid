@@ -1,0 +1,45 @@
+snapraid (11.3-0syprat1~DIST) UNRELEASED; urgency=medium
+
+  [ Andrea Mazzoleni ]
+  * Add checksums for 11.2
+  * Add fallthrough comments to avoid gcc 7 warnings
+
+  [ Valentin Hilbig ]
+  * Fix scanning of devices with multiple slaves
+
+  [ Andrea Mazzoleni ]
+  * Cleanup the memory messages
+  * Update TODO
+  * Regenerated manual with the new fixes
+  * Update with latest TommyDS
+  * Recognize the Windows ERROR_CRC(23) error
+  * Update TODO
+  * List the full nanosecond precision in verbose mode
+  * Update to TommyDS v3.0
+  * Improve crash resilience in Linux
+  * Fix future scrub times
+  * Automatically fix any scrub date that is in the future
+
+  [ BlueBlock ]
+  * Fix a typo in a message
+
+  [ Andrea Mazzoleni ]
+  * Fix some warnings with latest gcc 8.2.0
+  * Update HISTORY
+  * Add checksums for v11.3
+  * Remove a build warning about major/minor defined in sysmacros.h
+  * Allow the --force-device option to work with smart/up/down/devices
+  * Improve parity fixing speed
+  * Don't fix the size of filtered out parities
+  * Minor changes at the README
+  * Split the parity close and truncate operations
+  * Update HISTORY
+  * Print the time needed for state verification
+  * Update HISTORY
+  * Add MetroHash128 for speed measurement
+  * Add -march=native in the default build
+  * More explicative on bad blocks
+  * Print block stats
+  * Update HISTORY
+
+ -- Sylvain Prat <sylvain.prat@gmail.com>  Mon, 18 May 2020 08:55:05 +0200

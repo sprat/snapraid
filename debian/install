@@ -1,0 +1,2 @@
+#!/usr/bin/dh-exec
+snapraid.conf.example => /etc/snapraid.conf
