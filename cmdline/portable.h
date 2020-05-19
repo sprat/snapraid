@@ -198,9 +198,11 @@
 #include <sys/types.h>
 #endif
 
-#if MAJOR_IN_MKDEV
+#if HAVE_SYS_MKDEV
 #include <sys/mkdev.h>
-#elif MAJOR_IN_SYSMACROS
+#endif
+
+#if HAVE_SYS_SYSMACROS_H
 #include <sys/sysmacros.h>
 #endif
 
@@ -387,14 +389,14 @@ void os_clear(void);
  *
  * If no log file is selected, it's 0.
  */
-FILE* stdlog;
+extern FILE* stdlog;
 
 /**
  * Exit codes for testing.
  */
-int exit_success;
-int exit_failure;
-int exit_sync_needed;
+extern int exit_success;
+extern int exit_failure;
+extern int exit_sync_needed;
 #undef EXIT_SUCCESS
 #undef EXIT_FAILURE
 #define EXIT_SUCCESS exit_success

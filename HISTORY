@@ -1,6 +1,15 @@
 SnapRAID HISTORY
 ================
 
+11.4 2020/05
+=============================
+ * Fix build errors due new gcc 10 default for -fno-common.
+ * In fixing, if a parity is filtered out, don't attempt to recover its size,
+   and proceed without it if missing.
+ * Avoid unnecessary parity read when fixing the parity itself.
+   This improves the 'fix' speed when a parity file is completely missing.
+ * Removed a build warning about major/minor defined now in sys/sysmacros.h.
+
 11.3 2018/11
 ============
  * Fixed handing of Linux devices that have multiple slaves. This affects
