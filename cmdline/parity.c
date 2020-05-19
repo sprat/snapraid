@@ -217,6 +217,9 @@ int parity_create(struct snapraid_parity_handle* handle, const struct snapraid_p
 			/* LCOV_EXCL_STOP */
 		}
 
+		/* the initial valid size is the size on disk */
+		split->valid_size = split->st.st_size;
+
 		/**
 		 * If the parity size is not yet set, set it now.
 		 * This happens when expanding the number of parities,
@@ -528,6 +531,10 @@ static int parity_handle_chsize(struct snapraid_split_handle* split, data_off_t 
 		/* LCOV_EXCL_STOP */
 	}
 
+	/* if we shrink, update the valid size, but don't update when growing */
+	if (split->valid_size > split->st.st_size)
+		split->valid_size = split->st.st_size;
+
 	return 0;
 }
 
@@ -697,6 +704,9 @@ int parity_open(struct snapraid_parity_handle* handle, const struct snapraid_par
 			/* LCOV_EXCL_STOP */
 		}
 
+		/* the initial valid size is the size on disk */
+		split->valid_size = split->st.st_size;
+
 		/**
 		 * If the parity size is not yet set, set it now.
 		 * This happens when expanding the number of parities,
@@ -759,6 +769,30 @@ int parity_sync(struct snapraid_parity_handle* handle)
 #endif
 
 	return 0;
+}
+
+int parity_truncate(struct snapraid_parity_handle* handle)
+{
+	unsigned s;
+	int f_ret = 0;
+
+	for (s = 0; s < handle->split_mac; ++s) {
+		struct snapraid_split_handle* split = &handle->split_map[s];
+		int ret;
+
+		/* truncate any data that we know it's not valid */
+		ret = ftruncate(split->f, split->valid_size);
+		if (ret != 0) {
+			/* LCOV_EXCL_START */
+			log_fatal("Error truncating the parity file '%s' to size %" PRIu64 ". %s.\n", split->path, split->valid_size, strerror(errno));
+			f_ret = -1;
+			/* LCOV_EXCL_STOP */
+
+			/* continue to truncate the others */
+		}
+	}
+
+	return f_ret;
 }
 
 int parity_close(struct snapraid_parity_handle* handle)
@@ -826,6 +860,10 @@ int parity_write(struct snapraid_parity_handle* handle, block_off_t pos, unsigne
 		/* LCOV_EXCL_STOP */
 	}
 
+	/* update the valid range */
+	if (split->valid_size < offset + block_size)
+		split->valid_size = offset + block_size;
+
 	write_ret = pwrite(split->f, block_buffer, block_size, offset);
 	if (write_ret != (ssize_t)block_size) { /* conversion is safe because block_size is always small */
 		/* LCOV_EXCL_START */
@@ -863,6 +901,14 @@ int parity_read(struct snapraid_parity_handle* handle, block_off_t pos, unsigned
 	if (!split) {
 		/* LCOV_EXCL_START */
 		out("Reading parity data outside range at extra offset %" PRIu64 ".\n", offset);
+		return -1;
+		/* LCOV_EXCL_STOP */
+	}
+
+	/* if read is completely out of the valid range */
+	if (offset >= split->valid_size) {
+		/* LCOV_EXCL_START */
+		out("Missing data reading file '%s' at offset %" PRIu64 " for size %u.\n", split->path, offset, block_size);
 		return -1;
 		/* LCOV_EXCL_STOP */
 	}
