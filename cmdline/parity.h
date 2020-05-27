@@ -37,6 +37,16 @@ struct snapraid_split_handle {
 	data_off_t size;
 
 	/**
+	 * Valid size of the parity split.
+	 * This is the size effectively written, and not the result of a chsize operation.
+	 * It's used to make read operations failing if read over that size.
+	 *
+	 * Parity is also truncated to that size when fixing it, in case of a Break (Ctrl+C)
+	 * of the program.
+	 */
+	data_off_t valid_size;
+
+	/**
 	 * Artificial size limit for testing.
 	 * 0 means unlimited.
 	 */
@@ -112,6 +122,11 @@ int parity_open(struct snapraid_parity_handle* handle, const struct snapraid_par
  * Flush the parity file in the disk.
  */
 int parity_sync(struct snapraid_parity_handle* handle);
+
+/**
+ * Truncate the parity file to the valid size.
+ */
+int parity_truncate(struct snapraid_parity_handle* handle);
 
 /**
  * Close the parity file.
