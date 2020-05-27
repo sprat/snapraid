@@ -1,3 +1,19 @@
+snapraid (11.5-0syprat1~bionic) bionic; urgency=medium
+
+  [ Andrea Mazzoleni ]
+  * Add checksums for v11.4
+  * Regenerated the package fo v11.4 to fix the version string
+  * Remove the default -march=native
+
+  [ Andrea Gelmini ]
+  * Fix variable name
+  * Fix typos
+
+  [ Andrea Mazzoleni ]
+  * Update HISTORY
+
+ -- Sylvain Prat <sylvain.prat@gmail.com>  Wed, 27 May 2020 09:12:26 +0200
+
 snapraid (11.4-0syprat1~bionic) bionic; urgency=medium
 
   [ Andrea Mazzoleni ]
@@ -65,4 +81,3 @@ snapraid (11.3-0syprat1~bionic) bionic; urgency=medium
   * Update HISTORY
 
  -- Sylvain Prat <sylvain.prat@gmail.com>  Mon, 18 May 2020 08:55:05 +0200
-
