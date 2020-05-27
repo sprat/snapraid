@@ -1,6 +1,20 @@
 SnapRAID HISTORY
 ================
 
+11.5 2020/05
+============
+ * Removed the default -march=native to allow to deploy in any machine.
+ * Fixed typos [Andrea Gelmini]
+
+11.4 2020/05
+============
+ * Fix build errors due new gcc 10 default for -fno-common.
+ * In fixing, if a parity is filtered out, don't attempt to recover its size,
+   and proceed without it if missing.
+ * Avoid unnecessary parity read when fixing the parity itself.
+   This improves the 'fix' speed when a parity file is completely missing.
+ * Removed a build warning about major/minor defined now in sys/sysmacros.h.
+
 11.3 2018/11
 ============
  * Fixed handing of Linux devices that have multiple slaves. This affects
@@ -139,7 +153,7 @@ SnapRAID HISTORY
    A workaround was to just run 'sync' one time with the -N,
    --force-nocopy option to disable the copy detection.
  * Restored the -O2 optimization option for Windows binaries, as -Og has
-   a too big performance penality.
+   a too big performance penalty.
 
 9.2 2016/01
 ===========
@@ -412,7 +426,7 @@ SnapRAID HISTORY
    and Opteron.
  * Faster RAID5 and RAID6 implementation for ARM 64 bit CPUs.
  * If a silent error is found during a "sync" command, directly marks
-   the block as bad like in "scrub", without stopping the the "sync"
+   the block as bad like in "scrub", without stopping the "sync"
    process.
  * Sort files by inode when listing the directory. This improves
    the scanning performance.
