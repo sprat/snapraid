@@ -1,3 +1,41 @@
+snapraid (11.5-0syprat1~xenial) xenial; urgency=medium
+
+  [ Andrea Mazzoleni ]
+  * Add checksums for v11.4
+  * Regenerated the package fo v11.4 to fix the version string
+  * Remove the default -march=native
+
+  [ Andrea Gelmini ]
+  * Fix variable name
+  * Fix typos
+
+  [ Andrea Mazzoleni ]
+  * Update HISTORY
+
+ -- Sylvain Prat <sylvain.prat@gmail.com>  Wed, 27 May 2020 09:12:26 +0200
+
+snapraid (11.4-0syprat1~xenial) xenial; urgency=medium
+
+  [ Andrea Mazzoleni ]
+  * Add checksums for v11.3
+  * Remove a build warning about major/minor defined in sysmacros.h
+  * Allow the --force-device option to work with smart/up/down/devices
+  * Improve parity fixing speed
+  * Don't fix the size of filtered out parities
+  * Minor changes at the README
+  * Split the parity close and truncate operations
+  * Update HISTORY
+  * Print the time needed for state verification
+  * Update HISTORY
+  * Add MetroHash128 for speed measurement
+  * Add -march=native in the default build
+  * More explicative on bad blocks
+  * Print block stats
+  * Update HISTORY
+  * Fix build errors due new gcc 10 default for -fno-common
+
+ -- Sylvain Prat <sylvain.prat@gmail.com>  Tue, 19 May 2020 08:59:51 +0200
+
 snapraid (11.3-0syprat1~xenial) xenial; urgency=medium
 
   [ Andrea Mazzoleni ]

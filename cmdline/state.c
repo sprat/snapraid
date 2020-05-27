@@ -279,7 +279,7 @@ static void state_config_check(struct snapraid_state* state, const char* path, t
 				struct snapraid_disk* other = j->data;
 				if (disk->device == other->device) {
 					if (state->opt.force_device) {
-						/* note tha we just ignore the issue */
+						/* note that we just ignore the issue */
 						/* and we DON'T mark the disk to be skipped */
 						/* because we want to use these disks */
 						if (!state->opt.no_warnings)
@@ -310,15 +310,23 @@ static void state_config_check(struct snapraid_state* state, const char* path, t
 				for (l = 0; l < state->level; ++l) {
 					for (s = 0; s < state->parity[l].split_mac; ++s) {
 						if (disk->device == state->parity[l].split_map[s].device) {
-							/* LCOV_EXCL_START */
-							log_fatal("Disk '%s' and %s '%s' are on the same device.\n", disk->dir, lev_name(l), state->parity[l].split_map[s].path);
+							if (state->opt.force_device) {
+								/* note that we just ignore the issue */
+								/* and we DON'T mark the disk to be skipped */
+								/* because we want to use these disks */
+								if (!state->opt.no_warnings)
+									log_fatal("DANGER! Ignoring that disks '%s' and %s '%s' are on the same device\n", disk->dir, lev_name(l), state->parity[l].split_map[s].path);
+							} else {
+								/* LCOV_EXCL_START */
+								log_fatal("Disk '%s' and %s '%s' are on the same device.\n", disk->dir, lev_name(l), state->parity[l].split_map[s].path);
 #ifdef _WIN32
-							log_fatal("Both have the serial number '%" PRIx64 "'.\n", disk->device);
-							log_fatal("Try using the 'VolumeID' tool by 'Mark Russinovich'\n");
-							log_fatal("to change one of the disk serial.\n");
+								log_fatal("Both have the serial number '%" PRIx64 "'.\n", disk->device);
+								log_fatal("Try using the 'VolumeID' tool by 'Mark Russinovich'\n");
+								log_fatal("to change one of the disk serial.\n");
 #endif
-							exit(EXIT_FAILURE);
-							/* LCOV_EXCL_STOP */
+								exit(EXIT_FAILURE);
+								/* LCOV_EXCL_STOP */
+							}
 						}
 					}
 				}
@@ -364,7 +372,7 @@ static void state_config_check(struct snapraid_state* state, const char* path, t
 					for (t = 0; t < state->parity[j].split_mac; ++t) {
 						if (state->parity[l].split_map[s].device == state->parity[j].split_map[t].device) {
 							if (state->opt.force_device) {
-								/* note tha we just ignore the issue */
+								/* note that we just ignore the issue */
 								/* and we DON'T mark the disk to be skipped */
 								/* because we want to use these disks */
 								if (!state->opt.no_warnings)
@@ -623,7 +631,7 @@ void state_config(struct snapraid_state* state, const char* path, const char* co
 			}
 			state->block_size *= KIBI;
 		} else if (strcmp(tag, "hashsize") == 0
-			|| strcmp(tag, "hash_size") == 0 /* v11.0 used incorretly this one, kept now for backward compatibility */
+			|| strcmp(tag, "hash_size") == 0 /* v11.0 used incorrectly this one, kept now for backward compatibility */
 		) {
 			uint32_t hash_size;
 
@@ -1618,7 +1626,7 @@ static void state_content_check(struct snapraid_state* state, const char* path)
 /**
  * Check if the position is REQUIRED, or we can completely clear it from the state.
  *
- * Note that position with only DELETED blocks are discarged.
+ * Note that position with only DELETED blocks are discharged.
  */
 static int fs_position_is_required(struct snapraid_state* state, block_off_t pos)
 {
@@ -1844,7 +1852,7 @@ static void state_read_content(struct snapraid_state* state, const char* path, S
 			if (state->block_size == 0) {
 				/* LCOV_EXCL_START */
 				decoding_error(path, f);
-				log_fatal("Internal incosistency due zero blocksize!\n");
+				log_fatal("Internal inconsistency due zero blocksize!\n");
 				exit(EXIT_FAILURE);
 				/* LCOV_EXCL_STOP */
 			}
@@ -2398,6 +2406,9 @@ static void state_read_content(struct snapraid_state* state, const char* path, S
 			case 'k' :
 				state->hash = HASH_SPOOKY2;
 				break;
+			case 'm' :
+				state->hash = HASH_METRO;
+				break;
 			default :
 				/* LCOV_EXCL_START */
 				decoding_error(path, f);
@@ -2424,6 +2435,9 @@ static void state_read_content(struct snapraid_state* state, const char* path, S
 				break;
 			case 'k' :
 				state->prevhash = HASH_SPOOKY2;
+				break;
+			case 'm' :
+				state->prevhash = HASH_METRO;
 				break;
 			default :
 				/* LCOV_EXCL_START */
@@ -2947,6 +2961,8 @@ static void* state_write_thread(void* arg)
 		sputc('u', f);
 	} else if (state->hash == HASH_SPOOKY2) {
 		sputc('k', f);
+	} else if (state->hash == HASH_METRO) {
+		sputc('m', f);
 	} else {
 		/* LCOV_EXCL_START */
 		log_fatal("Unexpected hash when writing the content file '%s'.\n", serrorfile(f));
@@ -2970,6 +2986,8 @@ static void* state_write_thread(void* arg)
 				sputc('u', f);
 			} else if (state->prevhash == HASH_SPOOKY2) {
 				sputc('k', f);
+			} else if (state->prevhash == HASH_METRO) {
+				sputc('m', f);
 			} else {
 				/* LCOV_EXCL_START */
 				log_fatal("Unexpected prevhash when writing the content file '%s'.\n", serrorfile(f));
@@ -3837,10 +3855,14 @@ struct state_verify_thread_context {
 static void* state_verify_thread(void* arg)
 {
 	struct state_verify_thread_context* context = arg;
+	struct snapraid_content* content = context->content;
 	STREAM* f = context->f;
 	unsigned char buf[4];
 	uint32_t crc_stored;
 	uint32_t crc_computed;
+	uint64_t start;
+
+	start = tick_ms();
 
 	if (sdeplete(f, buf) != 0) {
 		/* LCOV_EXCL_START */
@@ -3871,6 +3893,8 @@ static void* state_verify_thread(void* arg)
 		return context;
 		/* LCOV_EXCL_STOP */
 	}
+
+	msg_progress("Verified %s in %" PRIu64 " seconds\n", content->content, (tick_ms() - start) / 1000);
 
 	return 0;
 }
@@ -4155,7 +4179,7 @@ void state_filter(struct snapraid_state* state, tommy_list* filterlist_file, tom
 		}
 	}
 
-	/* if we are filtering by disk, exclude any parity not explicitely included */
+	/* if we are filtering by disk, exclude any parity not explicitly included */
 	if (!tommy_list_empty(filterlist_disk)) {
 		/* for each parity disk */
 		for (l = 0; l < state->level; ++l) {
@@ -4463,7 +4487,8 @@ int state_progress(struct snapraid_state* state, struct snapraid_io* io, block_o
 	) {
 		time_t elapsed;
 		unsigned out_perc = 0;
-		unsigned out_speed = 0;
+		unsigned out_size_speed = 0;
+		unsigned out_block_speed = 0;
 		unsigned out_cpu = 0;
 		unsigned out_eta = 0;
 		int out_computed = 0;
@@ -4536,7 +4561,11 @@ int state_progress(struct snapraid_state* state, struct snapraid_io* io, block_o
 
 			/* estimate the speed in MB/s */
 			if (delta_time != 0)
-				out_speed = (unsigned)(delta_size / MEGA / delta_time);
+				out_size_speed = (unsigned)(delta_size / MEGA / delta_time);
+
+			/* estimate the speed in block/s */
+			if (delta_pos != 0)
+				out_block_speed = (unsigned)(delta_pos / delta_time);
 
 			/* estimate the cpu usage percentage */
 			if (delta_tick_total != 0)
@@ -4556,12 +4585,13 @@ int state_progress(struct snapraid_state* state, struct snapraid_io* io, block_o
 		}
 
 		if (state->opt.gui) {
-			log_tag("run:pos:%u:%u:%" PRIu64 ":%u:%u:%u:%u:%" PRIu64 "\n", blockpos, countpos, countsize, out_perc, out_eta, out_speed, out_cpu, (uint64_t)elapsed);
+			log_tag("run:pos:%u:%u:%" PRIu64 ":%u:%u:%u:%u:%" PRIu64 "\n", blockpos, countpos, countsize, out_perc, out_eta, out_size_speed, out_cpu, (uint64_t)elapsed);
 			log_flush();
 		} else {
 			msg_bar("%u%%, %u MB", out_perc, (unsigned)(countsize / MEGA));
 			if (out_computed) {
-				msg_bar(", %u MB/s", out_speed);
+				msg_bar(", %u MB/s", out_size_speed);
+				msg_bar(", %u block/s", out_block_speed);
 				msg_bar(", CPU %u%%", out_cpu);
 				msg_bar(", %u:%02u ETA", out_eta / 60, out_eta % 60);
 			}
